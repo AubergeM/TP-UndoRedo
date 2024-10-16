@@ -119,7 +119,9 @@ const polylineMachine = createMachine(
                 polyline.points(newPoints);
                 polyline.stroke("black"); // On change la couleur
                 // On sauvegarde la polyline dans la couche de dessin
-                dessin.add(polyline); // On l'ajoute à la couche de dessin
+                //dessin.add(polyline); // On l'ajoute à la couche de dessin
+                let command = new AddPolylineCommand(polyline, dessin);
+                command.execute(); 
             },
             addPoint: (context, event) => {
                 const pos = stage.getPointerPosition();
@@ -175,5 +177,78 @@ window.addEventListener("keydown", (event) => {
 // bouton Undo
 const undoButton = document.getElementById("undo");
 undoButton.addEventListener("click", () => {
-    
+    console.log("oui");
 });
+
+// bouton Redo
+const redoButton = document.getElementById("redo");
+redoButton.addEventListener("click", () => {
+    console.log("non");
+});
+
+class Command{
+    execute(){}
+    undo(){}
+}
+
+class AddPolylineCommand extends Command{
+    constructor(polyline, layer){
+        super();
+        this.myLayer = layer;
+        this.myParameter = polyline;
+    }
+
+    execute(){
+        this.myLayer.add(this.polyline);
+    }
+
+    undo(){
+        this.myPolyline.remove();
+    }
+}
+
+class UndoManager{
+    constructor(){
+        this.undoStack = new Stack();
+        this.redoStack = new Stack();
+    }
+
+    execute(Command){
+        this.undoStack.push(Command);
+        Command.execute();
+        this.updateUndoRedoButtons();
+    }
+    canUndo(){
+        return !this.undoStack.isEmpty();
+    }
+    canRedo(){
+        return !this.redoStack.isEmpty();
+    }
+    undo(){
+        if(this.canUndo()){
+            let command = this.undoStack.pop()
+            command.undo()//annulation de la commande 
+            this.redoStack.push(command)
+            this.updateUndoRedoButtons();
+        } 
+    }
+    redo(){
+        if(this.canRedo()){
+            let command = this.redoStack.pop()
+            command.execute()//exécution de la commande
+            this.undoStack.push(command)
+            this.updateUndoRedoButtons();
+        }
+    }
+
+    updateUndoRedoButtons(){
+        undoButton.disabled = !this.canUndo();
+        redoButton.disabled = !this.canRedo();
+    }
+    
+}
+
+class receiver{}
+
+class parameter{}
+
